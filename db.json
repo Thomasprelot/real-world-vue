@@ -71,6 +71,24 @@
           "name": "Mary Gordon"
         }
       ]
+    },
+    {
+      "id": 9239150,
+      "user": {
+        "id": "abc123",
+        "name": "Thomas Prelot"
+      },
+      "category": "nature",
+      "organizer": {
+        "id": "abc123",
+        "name": "Thomas Prelot"
+      },
+      "title": "Tree Planting",
+      "description": "We'll be planting trees",
+      "location": "The forest",
+      "date": "2020-11-01T17:00:00.000Z",
+      "time": "11:00",
+      "attendees": []
     }
   ]
 }
