@@ -1,30 +1,71 @@
 <template>
   <div>
-    <h1>Events Listing</h1>
-    <EventCard v-for="event in events" :key="event.id" :event="event" />
+    <h1>Events for {{ user.user.name }}</h1>
+    <EventCard v-for="event in event.events" :key="event.id" :event="event" />
+    <template v-if="page != 1">
+      <router-link
+        :to="{ name: 'event-list', query: { page: page - 1 } }"
+        rel="prev"
+      >
+        Prev Page</router-link
+      >
+    </template>
+    <template v-if="page != 1 && hasNextPage">
+      |
+    </template>
+    <template v-if="hasNextPage">
+      <router-link
+        :to="{ name: 'event-list', query: { page: page + 1 } }"
+        rel="next"
+      >
+        Next Page</router-link
+      >
+    </template>
   </div>
 </template>
+
 <script>
 import EventCard from '@/components/EventCard.vue'
-import EventService from '@/services/EventService.js'
+import { mapState } from 'vuex'
+import store from '@/store/store'
+
+function getPageEvents(routeTo, next) {
+  const currentPage = parseInt(routeTo.query.page) || 1
+  store
+    .dispatch('event/fetchEvents', {
+      page: currentPage
+    })
+    .then(() => {
+      routeTo.params.page = currentPage
+      next()
+    })
+    .catch((error) => {
+      console.log(error.response)
+      next({ name: 'network-issue' })
+    })
+}
 
 export default {
-  data() {
-    return {
-      events: []
-    }
-  },
   components: {
     EventCard
   },
-  created() {
-    EventService.getEvents()
-      .then((response) => {
-        this.events = response.data
-      })
-      .catch((error) => {
-        console.log('Ther was an error: ', error)
-      })
+  props: {
+    page: {
+      type: Number,
+      required: true
+    }
+  },
+  beforeRouteEnter(routeTo, routeFrom, next) {
+    getPageEvents(routeTo, next)
+  },
+  beforeRouteUpdate(routeTo, routeFrom, next) {
+    getPageEvents(routeTo, next)
+  },
+  computed: {
+    hasNextPage() {
+      return this.page * this.event.perPage < this.event.eventsTotal
+    },
+    ...mapState(['event', 'user'])
   }
 }
 </script>
