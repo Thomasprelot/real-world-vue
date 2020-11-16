@@ -2,62 +2,99 @@
   <div>
     <h1>Create an Event</h1>
     <form @submit.prevent="createEvent">
-      <label>Select a category</label>
-      <select v-model="event.category">
-        <option v-for="cat in categories" :key="cat">{{ cat }}</option>
-      </select>
+      <BaseSelect
+        label="Select a category"
+        v-model="event.category"
+        :options="categories"
+        :class="{ error: $v.event.category.$error }"
+        @blur="$v.event.category.$touch()"
+      />
+      <template v-if="$v.event.category.$error">
+        <p v-if="!$v.event.category.required">Category is required</p>
+      </template>
 
       <h3>Name & describe your event</h3>
-      <div class="field">
-        <label>Title</label>
-        <input
-          v-model="event.title"
-          type="text"
-          placeholder="Add an event title"
-        />
-      </div>
+      <BaseInput
+        label="Title"
+        placeholder="Title"
+        class="field"
+        v-model="event.title"
+        :class="{ error: $v.event.title.$error }"
+        @blur="$v.event.title.$touch()"
+      />
+      <template v-if="$v.event.title.$error">
+        <p v-if="!$v.event.title.required">Title is required</p>
+      </template>
 
-      <div class="field">
-        <label>Description</label>
-        <input
-          v-model="event.description"
-          type="text"
-          placeholder="Add a description"
-        />
-      </div>
+      <BaseInput
+        label="Description"
+        placeholder="Description"
+        class="field"
+        v-model="event.description"
+        :class="{ error: $v.event.description.$error }"
+        @blur="$v.event.description.$touch()"
+      />
+      <template v-if="$v.event.description.$error">
+        <p v-if="!$v.event.description.required">Description is required</p>
+      </template>
 
       <h3>Where is your event?</h3>
-      <div class="field">
-        <label>Location</label>
-        <input
-          v-model="event.location"
-          type="text"
-          placeholder="Add a location"
-        />
-      </div>
+      <BaseInput
+        label="Location"
+        placeholder="Location"
+        class="field"
+        v-model="event.location"
+        :class="{ error: $v.event.location.$error }"
+        @blur="$v.event.location.$touch()"
+      />
+      <template v-if="$v.event.location.$error">
+        <p v-if="!$v.event.location.required">Location is required</p>
+      </template>
 
       <h3>When is your event?</h3>
 
       <div class="field">
         <label>Date</label>
-        <Datepicker v-model="event.date" placeholder="Select a date" />
+        <datepicker
+          v-model="event.date"
+          placeholder="Select a date"
+          :input-class="{ error: $v.event.date.$error }"
+          @closed="$v.event.date.$touch()"
+        ></datepicker>
       </div>
+      <template v-if="$v.event.date.$error">
+        <p v-if="!$v.event.date.required">Date is required</p>
+      </template>
 
-      <div class="field">
-        <label>Select a time</label>
-        <select v-model="event.time">
-          <option v-for="time in times" :key="time">{{ time }}</option>
-        </select>
-      </div>
+      <BaseSelect
+        label="Select a time"
+        :options="times"
+        v-model="event.time"
+        @blur="$v.event.time.$touch()"
+        class="field"
+        :class="{ error: $v.event.time.$error }"
+      />
+      <template v-if="$v.event.time.$error">
+        <p v-if="!$v.event.time.required">Time is required</p>
+      </template>
 
-      <input type="submit" class="button -fill-gradient" value="Submit" />
+      <BaseButton
+        type="submit"
+        buttonClass="button-fill-gradient"
+        :disabled="$v.$anyerror"
+        >Submit</BaseButton
+      >
+      <p v-if="$v.$anyError" class="errorMesage">
+        Please fill out the required field(s).
+      </p>
     </form>
   </div>
 </template>
 
 <script>
-import Datepicker from 'vuejs-datepicker'
+import Datepicker from '@hokify/vuejs-datepicker'
 import NProgress from 'nprogress'
+import { required } from 'vuelidate/lib/validators'
 
 export default {
   components: { Datepicker },
@@ -72,21 +109,35 @@ export default {
       event: this.createFreshEventObject()
     }
   },
+  validations: {
+    event: {
+      category: { required },
+      organizer: { required },
+      title: { required },
+      description: { required },
+      location: { required },
+      date: { required },
+      time: { required }
+    }
+  },
   methods: {
     createEvent() {
-      NProgress.start()
-      this.$store
-        .dispatch('event/createEvent', this.event)
-        .then(() => {
-          this.$router.push({
-            name: 'event-show',
-            params: { id: this.event.id }
+      this.$v.$touch()
+      if (!this.$v.$invalid) {
+        NProgress.start()
+        this.$store
+          .dispatch('event/createEvent', this.event)
+          .then(() => {
+            this.$router.push({
+              name: 'event-show',
+              params: { id: this.event.id }
+            })
+            this.event = this.createFreshEventObject()
           })
-          this.event = this.createFreshEventObject()
-        })
-        .catch(() => {
-          NProgress.done()
-        })
+          .catch(() => {
+            NProgress.done()
+          })
+      }
     },
     createFreshEventObject() {
       const user = this.$store.state.user.user
